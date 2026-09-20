@@ -1,0 +1,43 @@
+---
+# Marketplace-required sshd directives. PasswordAuthentication is the one that is NOT a
+# STIG rule and appears in no benchmark role — it exists because AWS Marketplace requires
+# key-only access on a published AMI. The other two ARE STIG rules (RHEL-09-255045 /
+# RHEL-09-255040) and are deliberately duplicated here: an unhardened `base` image gets no
+# benchmark role at all, so this is their only source on that tier.
+stigready_baseline_sshd_directives:
+  - { key: PasswordAuthentication, value: "no" }
+  - { key: PermitRootLogin, value: "no" }
+  - { key: PermitEmptyPasswords, value: "no" }
+  - { key: ChallengeResponseAuthentication, value: "no" }
+  - { key: UsePAM, value: "yes" }
+
+# Written to the drop-in as well, where the distro supports Include.
+stigready_baseline_sshd_dropin: |
+  PasswordAuthentication no
+  PermitRootLogin no
+  PermitEmptyPasswords no
+  KbdInteractiveAuthentication no
+  ChallengeResponseAuthentication no
+  UsePAM yes
+
+# Live on every image so an unhardened base is not left on distro defaults. The RHEL family
+# does not enable fs.protected_hardlinks / fs.protected_symlinks by default (Ubuntu does).
+stigready_baseline_sysctls:
+  kernel.randomize_va_space: "2"
+  fs.protected_hardlinks: "1"
+  fs.protected_symlinks: "1"
+
+# Mount options applied on top of whatever the installer wrote. nodev/nosuid:
+# RHEL-09-231110/231120, ALMA-09-026530/026750, AZLX-23-002585/002590. noexec is a
+# RedHat-family STIG rule (RHEL-09-231115 / ALMA-09-026640); CIS wants it on Ubuntu too, so
+# it is applied everywhere. /boot/efi nosuid is RHEL-09-231105 — anaconda DROPS it from the
+# live mount, and EC2 mounts fresh from fstab on first boot, so it must be re-asserted.
+stigready_baseline_mount_options:
+  /home: [nodev, nosuid]
+  /tmp: [nodev, nosuid, noexec]
+  /var: [nodev, nosuid]
+  /var/log: [nodev, nosuid, noexec]
+  /var/log/audit: [nodev, nosuid, noexec]
+  /var/tmp: [nodev, nosuid, noexec]
+
+stigready_baseline_devshm_options: [nodev, nosuid, noexec]

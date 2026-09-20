@@ -1,0 +1,96 @@
+---
+# StigForge-owned product baseline. Applied to EVERY StigReady image, hardened or not.
+#
+# Owner decision 2026-09-20: all hardening is owned by the StigForge pipeline and the roles
+# it produces. That could not hold while `base` images existed, because an unhardened image
+# receives no benchmark role — so its sshd config, sysctls and mount options had nowhere to
+# come from but the factory. This role is where they come from now.
+#
+# It is NOT a benchmark. It carries what the PRODUCT requires:
+#   - AWS Marketplace SSH requirements (PasswordAuthentication no is NOT a STIG rule and
+#     appears in no benchmark role)
+#   - kernel sysctls that distro defaults leave off on the RHEL family
+#   - filesystem mount options, as a safety net over whatever the installer wrote
+#
+# On a hardened image the benchmark role ALSO sets the overlapping directives. That overlap
+# is deliberate and safe: every value here is stricter-or-equal, so whichever runs last, the
+# result is the same. What it buys is that `base` is never left on defaults.
+#
+# Explicitly NOT here, because none of it is hardening:
+#   - asserting the partition layout exists (structure)
+#   - rewriting a build-time device spec in fstab to its UUID (bootability: /dev/vda2 does
+#     not exist on EC2 Nitro, so the AMI would not boot)
+#   - the reboot/verify machinery around FIPS
+
+- name: Baseline | Kernel hardening sysctls
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-stigready-baseline.conf
+    sysctl_set: true
+    reload: true
+    state: present
+  loop: "{{ stigready_baseline_sysctls | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}={{ item.value }}"
+
+# The drop-in dir + `Include /etc/ssh/sshd_config.d/*.conf` ships on OpenSSH 8.2+ (Ubuntu,
+# RHEL 9/10) but NOT on RHEL 8's OpenSSH 8.0 — its sshd_config has no Include and the
+# directory does not exist, so writing there fails (G50). Guard on the directory; the
+# main-config enforcement below always runs and is the SOLE enforcement on RHEL 8.
+- name: Baseline | Detect the sshd drop-in directory (Include distros only)
+  ansible.builtin.stat:
+    path: /etc/ssh/sshd_config.d
+  register: stigready_baseline_sshd_dropin_dir
+
+# 10- so it is processed before cloud-init's 50-cloud-init.conf: sshd is
+# first-match-wins inside an Include, so a later file cannot weaken these.
+- name: Baseline | Write the high-priority sshd drop-in
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-stigready.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: "{{ stigready_baseline_sshd_dropin }}"
+  when: stigready_baseline_sshd_dropin_dir.stat.exists
+
+- name: Baseline | Remove the legacy 99-stigready.conf drop-in (renamed to 10-)
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/99-stigready.conf
+    state: absent
+  when: stigready_baseline_sshd_dropin_dir.stat.exists
+
+- name: Baseline | Enforce the same directives in the main sshd_config (sole enforcement on RHEL 8)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?{{ item.key }}\\s"
+    line: "{{ item.key }} {{ item.value }}"
+    state: present
+  loop: "{{ stigready_baseline_sshd_directives }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Baseline | Apply mount options to the separate filesystems
+  ansible.posix.mount:
+    path: "{{ item.mount }}"
+    src: "{{ item.device }}"
+    fstype: "{{ item.fstype }}"
+    opts: "{{ (['defaults'] + stigready_baseline_mount_options[item.mount]) | join(',') }}"
+    state: mounted
+    backup: true
+  loop: >-
+    {{ ansible_facts['mounts']
+       | selectattr('mount', 'in', stigready_baseline_mount_options.keys() | list)
+       | list }}
+  loop_control:
+    label: "{{ item.mount }} ({{ stigready_baseline_mount_options[item.mount] | join(',') }})"
+
+# tmpfs defaults do not pin these, so an explicit fstab entry is required.
+- name: Baseline | Ensure /dev/shm is a hardened tmpfs
+  ansible.posix.mount:
+    path: /dev/shm
+    src: tmpfs
+    fstype: tmpfs
+    opts: "{{ (['defaults'] + stigready_baseline_devshm_options) | join(',') }}"
+    state: mounted
+    backup: true

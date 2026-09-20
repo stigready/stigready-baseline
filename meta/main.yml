@@ -1,0 +1,29 @@
+galaxy_info:
+  role_name: stigready_baseline
+  namespace: stigready
+  description: Ansible role for stigready OpenSCAP hardening (baseline). ComplianceAsCode/SSG
+    remediation, OpenSCAP-verified in StigForge CI. Install with ansible-galaxy or
+    git.
+  license: BSD-3-Clause
+  min_ansible_version: '2.16'
+  platforms:
+  - name: EL
+    versions:
+    - '8'
+    - '9'
+    - '10'
+  author: stigready
+  company: StigReady
+  galaxy_tags:
+  - ansible
+  - ansible-role
+  - compliance
+  - devsecops
+  - hardening
+  - infrastructure
+  - openscap
+  - security
+  - stigforge
+  github_branch: main
+  issue_tracker_url: https://github.com/stigready/stigready-baseline/issues
+dependencies: []
