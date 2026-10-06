@@ -3,7 +3,7 @@
 #
 # Owner decision 2026-09-20: all hardening is owned by the StigForge pipeline and the roles
 # it produces. That could not hold while `base` images existed, because an unhardened image
-# receives no benchmark role — so its sshd config, sysctls and mount options had nowhere to
+# receives no benchmark role - so its sshd config, sysctls and mount options had nowhere to
 # come from but the factory. This role is where they come from now.
 #
 # It is NOT a benchmark. It carries what the PRODUCT requires:
@@ -35,7 +35,7 @@
     label: "{{ item.key }}={{ item.value }}"
 
 # The drop-in dir + `Include /etc/ssh/sshd_config.d/*.conf` ships on OpenSSH 8.2+ (Ubuntu,
-# RHEL 9/10) but NOT on RHEL 8's OpenSSH 8.0 — its sshd_config has no Include and the
+# RHEL 9/10) but NOT on RHEL 8's OpenSSH 8.0 - its sshd_config has no Include and the
 # directory does not exist, so writing there fails (G50). Guard on the directory; the
 # main-config enforcement below always runs and is the SOLE enforcement on RHEL 8.
 - name: Baseline | Detect the sshd drop-in directory (Include distros only)
