@@ -1,15 +1,15 @@
 {
   "role_name": "stigready_baseline",
-  "release": "0.3.30",
+  "release": "0.3.31",
   "min_score": 90.0,
   "family": "all",
   "docker_image_tag": "stigready-prove-stigready_baseline",
-  "factory_commit": "47b95c40714610d3bc69e8bf49ad66de0eb18245",
+  "factory_commit": "9f8142b6fbbc52fee1d4f566a0102988e2a9aea5",
   "profiles": {
     "baseline": {
       "xccdf_profile_id": null,
       "ssg_datastream": "",
-      "evidence_dir": "compliance/releases/0.3.30/baseline"
+      "evidence_dir": "compliance/releases/0.3.31/baseline"
     }
   },
   "exempt_rules_file": "compliance/exempt-rules.txt"
