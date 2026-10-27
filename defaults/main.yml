@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 StigReady
+# SPDX-License-Identifier: MIT
 ---
 # Marketplace-required sshd directives. PasswordAuthentication is the one that is NOT a
 # STIG rule and appears in no benchmark role — it exists because AWS Marketplace requires

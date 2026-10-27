@@ -1,9 +1,8 @@
 galaxy_info:
   role_name: stigready_baseline
   namespace: stigready
-  description: Ansible role for stigready OpenSCAP hardening (baseline). ComplianceAsCode/SSG
-    remediation, OpenSCAP-verified in StigForge CI. Install with ansible-galaxy or
-    git.
+  description: 'StigReady baseline role (sshd, kernel sysctls, mount options). Hand-written:
+    not generated from ComplianceAsCode/SSG and not a CIS or STIG profile.'
   license: BSD-3-Clause
   min_ansible_version: '2.16'
   platforms:

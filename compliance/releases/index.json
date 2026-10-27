@@ -138,5 +138,10 @@
     "version": "0.3.49",
     "role": "stigready_baseline",
     "matrix_status": "green"
+  },
+  {
+    "version": "0.3.51",
+    "role": "stigready_baseline",
+    "matrix_status": "green"
   }
 ]
